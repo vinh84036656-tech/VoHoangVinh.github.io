@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TechShop - Cửa hàng công nghệ</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", Roboto, Arial, sans-serif; background: #f3f4f6; color: #1f2937; line-height: 1.5; }
+  a { text-decoration: none; color: inherit; }
+  button { font: inherit; cursor: pointer; }
+
+  /* Header */
+  .header { position: sticky; top: 0; z-index: 50; background: #0f172a; color: #fff;
+    display: flex; align-items: center; gap: 20px; padding: 12px 24px; }
+  .logo { font-size: 22px; font-weight: 700; }
+  .logo span { color: #38bdf8; }
+  .search { flex: 1; max-width: 520px; }
+  .search input { width: 100%; padding: 10px 14px; border: 0; border-radius: 8px; font: inherit; }
+  .cart-btn { margin-left: auto; position: relative; background: #38bdf8; color: #0f172a;
+    border: 0; padding: 10px 16px; border-radius: 8px; font-weight: 700; }
+  .cart-btn .count { position: absolute; top: -8px; right: -8px; background: #ef4444; color: #fff;
+    min-width: 22px; height: 22px; border-radius: 11px; font-size: 12px;
+    display: grid; place-items: center; padding: 0 5px; }
+
+  /* Banner */
+  .banner { background: linear-gradient(135deg, #1e3a8a, #0f172a); color: #fff;
+    padding: 48px 24px; text-align: center; }
+  .banner h1 { font-size: 32px; margin-bottom: 8px; }
+  .banner p { color: #cbd5e1; }
+
+  /* Bộ lọc */
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+  .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+  .filters button { background: #fff; border: 1px solid #d1d5db; padding: 8px 16px; border-radius: 999px; }
+  .filters button.active { background: #0f172a; color: #fff; border-color: #0f172a; }
+
+  /* Sản phẩm */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 20px; }
+  .product { background: #fff; border-radius: 14px; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,.1); display: flex; flex-direction: column; transition: transform .2s; }
+  .product:hover { transform: translateY(-4px); }
+  .thumb { height: 150px; display: grid; place-items: center; font-size: 64px; background: #e0f2fe; position: relative; }
+  .sale { position: absolute; top: 10px; left: 10px; background: #ef4444; color: #fff;
+    font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 6px; }
+  .info { padding: 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .info h3 { font-size: 16px; }
+  .info .desc { font-size: 13px; color: #6b7280; flex: 1; }
+  .price { font-size: 18px; font-weight: 700; color: #dc2626; }
+  .price del { font-size: 13px; color: #9ca3af; font-weight: 400; margin-left: 6px; }
+  .add { background: #0f172a; color: #fff; border: 0; padding: 10px; border-radius: 8px; margin-top: 6px; }
+  .add:hover { background: #1e3a8a; }
+  .empty { text-align: center; color: #6b7280; padding: 40px 0; grid-column: 1 / -1; }
+
+  /* Giỏ hàng */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); opacity: 0; visibility: hidden;
+    transition: .25s; z-index: 90; }
+  .overlay.show { opacity: 1; visibility: visible; }
+  .cart { position: fixed; top: 0; right: 0; bottom: 0; width: min(400px, 100%); background: #fff;
+    z-index: 100; transform: translateX(100%); transition: transform .3s;
+    display: flex; flex-direction: column; }
+  .cart.show { transform: translateX(0); }
+  .cart-head { display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 20px; border-bottom: 1px solid #e5e7eb; }
+  .cart-head button { background: none; border: 0; font-size: 22px; }
+  .cart-items { flex: 1; overflow-y: auto; padding: 10px 20px; }
+  .item { display: flex; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid #f3f4f6; }
+  .item .ico { font-size: 32px; width: 52px; height: 52px; background: #e0f2fe; border-radius: 10px;
+    display: grid; place-items: center; flex: none; }
+  .item .meta { flex: 1; font-size: 14px; }
+  .item .meta b { display: block; }
+  .qty { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .qty button { width: 26px; height: 26px; border: 1px solid #d1d5db; background: #fff; border-radius: 6px; }
+  .remove { background: none; border: 0; color: #ef4444; font-size: 18px; }
+  .cart-foot { padding: 18px 20px; border-top: 1px solid #e5e7eb; }
+  .total { display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+  .checkout { width: 100%; background: #16a34a; color: #fff; border: 0; padding: 13px; border-radius: 8px; font-weight: 700; }
+  .cart-empty { text-align: center; color: #6b7280; padding: 40px 0; }
+
+  /* Thông báo */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translate(-50%, 80px); background: #0f172a;
+    color: #fff; padding: 12px 20px; border-radius: 8px; transition: transform .3s; z-index: 200; }
+  .toast.show { transform: translate(-50%, 0); }
+
+  .footer { background: #0f172a; color: #94a3b8; text-align: center; padding: 24px; margin-top: 40px; font-size: 14px; }
+
+  @media (max-width: 640px) {
+    .header { flex-wrap: wrap; }
+    .search { order: 3; max-width: none; flex-basis: 100%; }
+    .banner h1 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <a href="#" class="logo">Tech<span>Shop</span></a>
+  <div class="search"><input type="search" id="search" placeholder="Tìm sản phẩm..."></div>
+  <button class="cart-btn" id="openCart">🛒 Giỏ hàng <span class="count" id="count">0</span></button>
+</header>
+
+<section class="banner">
+  <h1>Đồ công nghệ chính hãng, giá tốt mỗi ngày</h1>
+  <p>Miễn phí giao hàng cho đơn từ 500.000đ</p>
+</section>
+
+<main class="container">
+  <div class="filters" id="filters"></div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<footer class="footer">© 2026 TechShop. Hotline: 0900 000 000</footer>
+
+<div class="overlay" id="overlay"></div>
+<aside class="cart" id="cart">
+  <div class="cart-head"><h2>Giỏ hàng</h2><button id="closeCart" aria-label="Đóng">✕</button></div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="cart-foot">
+    <div class="total"><span>Tổng cộng</span><span id="total">0đ</span></div>
+    <button class="checkout" id="checkout">Thanh toán</button>
+  </div>
+</aside>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const products = [
+    { id: 1, name: "Chuột không dây", cat: "Phụ kiện", icon: "🖱️", price: 250000, old: 320000, desc: "Kết nối 2.4GHz, pin dùng 12 tháng." },
+    { id: 2, name: "Bàn phím cơ", cat: "Phụ kiện", icon: "⌨️", price: 890000, old: 0, desc: "Switch blue, đèn nền RGB." },
+    { id: 3, name: "Tai nghe Bluetooth", cat: "Âm thanh", icon: "🎧", price: 590000, old: 750000, desc: "Chống ồn, pin 30 giờ." },
+    { id: 4, name: "Loa mini", cat: "Âm thanh", icon: "🔊", price: 420000, old: 0, desc: "Chống nước IPX7, âm bass mạnh." },
+    { id: 5, name: "Laptop văn phòng", cat: "Máy tính", icon: "💻", price: 12500000, old: 13900000, desc: "RAM 16GB, SSD 512GB, màn 14 inch." },
+    { id: 6, name: "Màn hình 24 inch", cat: "Máy tính", icon: "🖥️", price: 2890000, old: 0, desc: "Full HD, tần số quét 75Hz." },
+    { id: 7, name: "Điện thoại thông minh", cat: "Điện thoại", icon: "📱", price: 6990000, old: 7990000, desc: "Camera 50MP, pin 5000mAh." },
+    { id: 8, name: "Sạc dự phòng 20.000mAh", cat: "Điện thoại", icon: "🔋", price: 350000, old: 0, desc: "Sạc nhanh 22.5W, 2 cổng ra." },
+    { id: 9, name: "Webcam Full HD", cat: "Phụ kiện", icon: "📷", price: 480000, old: 0, desc: "Micro tích hợp, cắm là chạy." },
+    { id: 10, name: "Ổ cứng SSD 1TB", cat: "Máy tính", icon: "💾", price: 1650000, old: 1890000, desc: "Tốc độ đọc 3500MB/s." }
+  ];
+
+  const $ = id => document.getElementById(id);
+  const fmt = n => n.toLocaleString("vi-VN") + "đ";
+  let cart = {};      // { id: số lượng }
+  let category = "Tất cả";
+  let keyword = "";
+
+  // Bộ lọc danh mục
+  const cats = ["Tất cả", ...new Set(products.map(p => p.cat))];
+  function renderFilters() {
+    $("filters").innerHTML = cats.map(c =>
+      `<button class="${c === category ? "active" : ""}" data-cat="${c}">${c}</button>`).join("");
+  }
+  $("filters").addEventListener("click", e => {
+    if (e.target.dataset.cat) { category = e.target.dataset.cat; renderFilters(); renderProducts(); }
+  });
+
+  // Danh sách sản phẩm
+  function renderProducts() {
+    const list = products.filter(p =>
+      (category === "Tất cả" || p.cat === category) &&
+      p.name.toLowerCase().includes(keyword.toLowerCase()));
+    $("grid").innerHTML = list.length ? list.map(p => `
+      <article class="product">
+        <div class="thumb">${p.icon}
+          ${p.old ? `<span class="sale">-${Math.round((1 - p.price / p.old) * 100)}%</span>` : ""}
+        </div>
+        <div class="info">
+          <h3>${p.name}</h3>
+          <p class="desc">${p.desc}</p>
+          <div class="price">${fmt(p.price)}${p.old ? `<del>${fmt(p.old)}</del>` : ""}</div>
+          <button class="add" data-add="${p.id}">Thêm vào giỏ</button>
+        </div>
+      </article>`).join("") : `<p class="empty">Không tìm thấy sản phẩm phù hợp.</p>`;
+  }
+  $("grid").addEventListener("click", e => {
+    if (e.target.dataset.add) addToCart(+e.target.dataset.add);
+  });
+  $("search").addEventListener("input", e => { keyword = e.target.value; renderProducts(); });
+
+  // Giỏ hàng
+  function addToCart(id) {
+    cart[id] = (cart[id] || 0) + 1;
+    updateCart();
+    toast("Đã thêm \"" + products.find(p => p.id === id).name + "\" vào giỏ");
+  }
+  function changeQty(id, d) {
+    cart[id] += d;
+    if (cart[id] <= 0) delete cart[id];
+    updateCart();
+  }
+  function updateCart() {
+    const ids = Object.keys(cart);
+    let total = 0, count = 0;
+    $("cartItems").innerHTML = ids.length ? ids.map(id => {
+      const p = products.find(x => x.id == id), q = cart[id];
+      total += p.price * q; count += q;
+      return `<div class="item">
+        <div class="ico">${p.icon}</div>
+        <div class="meta"><b>${p.name}</b>${fmt(p.price)}
+          <div class="qty">
+            <button data-minus="${p.id}">−</button><span>${q}</span><button data-plus="${p.id}">+</button>
+          </div></div>
+        <button class="remove" data-del="${p.id}" aria-label="Xóa">🗑</button>
+      </div>`;
+    }).join("") : `<p class="cart-empty">Giỏ hàng đang trống.</p>`;
+    $("total").textContent = fmt(total);
+    $("count").textContent = count;
+  }
+  $("cartItems").addEventListener("click", e => {
+    const d = e.target.dataset;
+    if (d.plus) changeQty(+d.plus, 1);
+    if (d.minus) changeQty(+d.minus, -1);
+    if (d.del) { delete cart[d.del]; updateCart(); }
+  });
+
+  // Mở/đóng giỏ
+  const toggleCart = show => {
+    $("cart").classList.toggle("show", show);
+    $("overlay").classList.toggle("show", show);
+  };
+  $("openCart").onclick = () => toggleCart(true);
+  $("closeCart").onclick = $("overlay").onclick = () => toggleCart(false);
+
+  $("checkout").onclick = () => {
+    if (!Object.keys(cart).length) return toast("Giỏ hàng đang trống");
+    cart = {}; updateCart(); toggleCart(false);
+    toast("Đặt hàng thành công! Cảm ơn bạn.");
+  };
+
+  // Thông báo nhỏ
+  let timer;
+  function toast(msg) {
+    $("toast").textContent = msg;
+    $("toast").classList.add("show");
+    clearTimeout(timer);
+    timer = setTimeout(() => $("toast").classList.remove("show"), 2000);
+  }
+
+  renderFilters(); renderProducts(); updateCart();
+</script>
+</body>
+</html>
